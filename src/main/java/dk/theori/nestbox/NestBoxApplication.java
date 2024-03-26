@@ -47,9 +47,10 @@ public class NestBoxApplication implements CommandLineRunner {
 		File nestboxFile = new File(JSON_DIR + "/nestboxes.json");
 		FileInputStream inputStream = new FileInputStream(nestboxFile);
 
-		//InputStream inputStream = Main.class.getClassLoader().getResourceAsStream("nestboxes.json");
 		NestBoxFeatureCollection  featureCollection= objectMapper.readValue(inputStream, new TypeReference<>() {
 		});
+
+		// insert nestboxes to "nestbox" repository
 		List<NestBox> nestboxes = nestBoxMongoRepository.insert(featureCollection.getFeatures());
 		return nestboxes.size();
 	}
