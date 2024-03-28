@@ -64,6 +64,18 @@ public class NestBoxController {
         return optNestBox.orElse(null);
     }
 
+    @PostMapping("takedown/{fid}/{offline}")
+    public NestBoxProperties setOffLine(@PathVariable("fid") Integer fid, @PathVariable("offline") Boolean offline){
+        NestBox nestBox = nestBoxFeatureById(fid);
+        if(nestBox != null) {
+            NestBoxProperties props = nestBox.getProperties();
+            props.setIsOffline(offline);
+            this.nestBoxMongoRepository.save(nestBox);
+            return nestBox.getProperties();
+        }
+        else return null;
+    }
+
 
 
 }

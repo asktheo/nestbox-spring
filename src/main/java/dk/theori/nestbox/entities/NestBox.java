@@ -46,5 +46,12 @@ public class NestBox {
         return properties.getZone();
     }
 
+    @JsonIgnore
+    public boolean getIsOffline(){
+        return properties.getIsOffline();
+    }
 
+    public void setIsOffline(Boolean isOffline){
+        properties.setIsOffline(isOffline);
+    }
 }
