@@ -1,14 +1,13 @@
 package dk.theori.nestbox;
 
-import dk.theori.nestbox.entities.NestBox;
-import dk.theori.nestbox.entities.NestBoxProperties;
+import dk.theori.nestbox.entities.*;
 import dk.theori.nestbox.repositories.NestBoxMongoRepository;
+import dk.theori.nestbox.repositories.NestBoxRecordMongoRepository;
+import dk.theori.nestbox.repositories.NestBoxStatusRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.repository.query.Param;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 @CrossOrigin
@@ -18,6 +17,12 @@ public class NestBoxController {
 
     @Autowired
     private NestBoxMongoRepository nestBoxMongoRepository;
+
+    @Autowired
+    private NestBoxRecordMongoRepository nestBoxRecordMongoRepository;
+
+    @Autowired
+    private NestBoxStatusRepository nestBoxStatusRepository;
 
     @GetMapping("")
     public List<NestBoxProperties> nestBoxProperties(
@@ -76,6 +81,23 @@ public class NestBoxController {
         else return null;
     }
 
+    @GetMapping("record/{fid}/new")
+    public NestBoxRecord newNestBoxRecord(@PathVariable("fid") Integer fid){
+        NestBoxRecord record = new NestBoxRecord(fid);
+        record.setStatus(new NestBoxStatus());
+        record.setNesting(new NestingDetails());
+        return record;
+    }
+
+    @PostMapping("record/add")
+    public void record(@RequestBody() NestBoxRecord record){
+        this.nestBoxRecordMongoRepository.insert(record);
+    }
+
+    @PostMapping("status")
+    public void statusType(@RequestBody() NestBoxStatus newStatusType){
+       this.nestBoxStatusRepository.insert(newStatusType);
+    }
 
 
 }
