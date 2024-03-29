@@ -8,9 +8,4 @@ public class NestingDetails {
     Integer eggs;
     Integer chicks;
 
-    public NestingDetails() {
-        species = "ubestemt";
-        eggs = 0;
-        chicks = 0;
-    }
 }
