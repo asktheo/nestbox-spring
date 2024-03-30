@@ -1,5 +1,6 @@
 package dk.theori.nestbox.entities;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
@@ -15,6 +16,7 @@ public class NestBoxRecord {
     @Id
     ObjectId id;
     Integer fid;
+    @JsonFormat(locale="da_DK") //Makes sure that it is GMT+1 and summertime if necessary
     LocalDateTime datetime; //2024-03-27T19:25:00
     String comment;
     NestBoxStatus status;
