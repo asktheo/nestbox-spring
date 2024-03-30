@@ -1,7 +1,7 @@
 [
   {
     "fid": 1,
-    "datetime": "2024-03-30T11:05:31",
+    "datetime": "2024-03-30T10:05:31",
     "comment": "Test LocalDate",
     "status": {
       "statusName": "Tom",
@@ -9,7 +9,7 @@
     },
     "nesting": {
       "species": "Musvit",
-      "eggs": 3,
+      "eggs": 2,
       "chicks": 0
     },
     "rings": []

@@ -29,7 +29,8 @@ public class NestBoxController {
     public List<NestBoxProperties> nestBoxProperties(
             @RequestParam(value ="boxId", required=false) String boxId,
             @RequestParam(value = "altitude", required=false) Integer altitude,
-            @RequestParam(value = "zone", required=false) String zone){
+            @RequestParam(value = "zone", required=false) String zone,
+            @RequestParam(value = "offline", required=false) Boolean offline){
         //find all and filter later
         List<NestBox> allNestBoxes = nestBoxMongoRepository.findAll();
 
@@ -38,6 +39,7 @@ public class NestBoxController {
                 .filter(nestBox -> boxId == null || boxId.equals(nestBox.getBoxId()))
                 .filter(nestBox -> altitude == null || altitude.equals(nestBox.getAltitude()))
                 .filter(nestBox -> zone == null || zone.equals(nestBox.getZone()))
+                .filter(nestBox -> offline == null || offline.equals(nestBox.getIsOffline()))
                 .map(NestBox::getProperties)
                 .toList();
     }
@@ -46,7 +48,8 @@ public class NestBoxController {
     public List<NestBox> nestBoxFeatures(
             @RequestParam(value ="boxId", required=false) String boxId,
             @RequestParam(value = "altitude", required=false) Integer altitude,
-            @RequestParam(value = "zone", required=false) String zone){
+            @RequestParam(value = "zone", required=false) String zone,
+            @RequestParam(value = "offline", required=false) Boolean offline){
         List<NestBox> allNestBoxes = nestBoxMongoRepository.findAll();
 
         return allNestBoxes
@@ -54,6 +57,7 @@ public class NestBoxController {
                 .filter(nestBox -> boxId == null || boxId.equals(nestBox.getBoxId()))
                 .filter(nestBox -> altitude == null || altitude.equals(nestBox.getAltitude()))
                 .filter(nestBox -> zone == null || zone.equals(nestBox.getZone()))
+                .filter(nestBox -> offline == null || !offline.equals(nestBox.getIsOffline()))
                 .toList();
     }
 
@@ -130,33 +134,45 @@ public class NestBoxController {
                 .stream()
                 .filter(nestBox -> !nestBox.getProperties().getIsOffline())
                 .toList();
-        List<NestBoxRecord> latestRecordsForActiveBoxes = new ArrayList<>();
+        //list for boxes to be checked within bounds for check criteria in data and request
+        List<NestBoxRecord> latestRecordsForBoxesToBeChecked = new ArrayList<>();
+        //list for boxes already checked and outside bounds for check criteria in data and request
+        List<NestBoxRecord> latestRecordsForBoxesChecked = new ArrayList<>();
         //unchecked boxes
         List<NestBoxProperties> boxesNotChecked = new ArrayList<>();
         for(NestBox b : allActiveNestBoxes){
             NestBoxRecord latest = latestNestBoxRecord(b.getFid());
             //add if the date to be checked is before the date constructed from the query (default now + 7d)
-            if(latest != null && latest.getDatetime().plusDays(latest.getStatus().getIntervalInDaysSelected()).isBefore(beforeDateTime)){
-                latestRecordsForActiveBoxes.add(latest);
+            if(latest != null) {
+               if(latest.getDatetime().plusDays(latest.getStatus().getIntervalInDaysSelected()).isBefore(beforeDateTime)){
+                   latestRecordsForBoxesToBeChecked.add(latest);
+               }
+               else{
+                   latestRecordsForBoxesChecked.add(latest);
+               }
             }
             else
                 boxesNotChecked.add(b.getProperties());
         }
         //use controller method to get all box properties
-        List<NestBoxProperties> allProperties = nestBoxProperties(null,null,null);
+        List<NestBoxProperties> pAllActiveBoxes = nestBoxProperties(null,null,null, false);
 
         //Hashmap for returning two lists with names:
         HashMap returnLists = new HashMap<String, List<NestBoxProperties>>();
 
         //match the records with NestBoxProperties
-        List<NestBoxProperties> boxesForChecking = allProperties.stream()
-                .filter(p -> !p.getIsOffline())
-                .filter(p -> latestRecordsForActiveBoxes.stream().anyMatch(r -> r.getFid() == p.getFid()))
+        List<NestBoxProperties> boxesForChecking = pAllActiveBoxes.stream()
+                .filter(p -> latestRecordsForBoxesToBeChecked.stream().anyMatch(r -> r.getFid() == p.getFid()))
+                .toList();
+
+        List<NestBoxProperties> boxesChecked = pAllActiveBoxes.stream()
+                .filter(p -> latestRecordsForBoxesChecked.stream().anyMatch(t -> t.getFid() == p.getFid()))
                 .toList();
 
         //put results in HasHMap:
         returnLists.put("boxesForChecking", boxesForChecking);
         returnLists.put("boxesNotChecked", boxesNotChecked);
+        returnLists.put("boxesChecked", boxesChecked);
 
         return returnLists;
 
