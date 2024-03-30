@@ -6,8 +6,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 
-import java.time.LocalDate;
-import java.util.Date;
+import java.time.LocalDateTime;
 
 @Data
 @Document(collection = "record")
@@ -16,7 +15,7 @@ public class NestBoxRecord {
     @Id
     ObjectId id;
     Integer fid;
-    LocalDate datetime; //2024-03-27T19:25:00
+    LocalDateTime datetime; //2024-03-27T19:25:00
     String comment;
     NestBoxStatus status;
     NestingDetails nesting;

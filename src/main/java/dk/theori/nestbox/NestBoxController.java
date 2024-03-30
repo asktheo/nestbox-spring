@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @CrossOrigin
@@ -85,7 +86,7 @@ public class NestBoxController {
     public NestBoxRecord newNestBoxRecord(@PathVariable("fid") Integer fid){
         NestBoxRecord record = new NestBoxRecord();
         record.setFid(fid);
-        record.setDatetime(LocalDate.now());
+        record.setDatetime(LocalDateTime.now());
         record.setStatus(new NestBoxStatus());
         record.setNesting(new NestingDetails());
         //rings is an interval (from ring #, to ring #)
@@ -104,7 +105,7 @@ public class NestBoxController {
 
     @PostMapping("record/add")
     public void record(@RequestBody() NestBoxRecord record){
-        if(record.getDatetime() == null){ record.setDatetime(LocalDate.now());}
+        if(record.getDatetime() == null){ record.setDatetime(LocalDateTime.now());}
 
         this.nestBoxRecordMongoRepository.insert(record);
     }
@@ -122,7 +123,7 @@ public class NestBoxController {
 
     @GetMapping("checkme")
     public HashMap<String, List<NestBoxProperties>> getNestBoxesForChecking(@RequestParam(value ="before", required=false) Integer beforeInDays){
-        LocalDate beforeDate = LocalDate.now().plusDays((beforeInDays == null) ? 7 : beforeInDays);
+        LocalDateTime beforeDateTime = LocalDateTime.now().plusDays((beforeInDays == null) ? 7 : beforeInDays);
 
         //find records for all Nestboxes not offline
         List<NestBox> allActiveNestBoxes = this.nestBoxMongoRepository.findAll()
@@ -135,7 +136,7 @@ public class NestBoxController {
         for(NestBox b : allActiveNestBoxes){
             NestBoxRecord latest = latestNestBoxRecord(b.getFid());
             //add if the date to be checked is before the date constructed from the query (default now + 7d)
-            if(latest != null && latest.getDatetime().plusDays(latest.getStatus().getIntervalInDaysSelected()).isBefore(beforeDate)){
+            if(latest != null && latest.getDatetime().plusDays(latest.getStatus().getIntervalInDaysSelected()).isBefore(beforeDateTime)){
                 latestRecordsForActiveBoxes.add(latest);
             }
             else
