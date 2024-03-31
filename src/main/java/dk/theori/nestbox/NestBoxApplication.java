@@ -62,7 +62,7 @@ public class NestBoxApplication implements CommandLineRunner {
 		ObjectMapper objectMapper = new ObjectMapper();
 
 		// Read JSON resource file
-		File nestboxFile = new File(JSON_DIR + "/nestboxes.json");
+		File nestboxFile = new File(JSON_DIR + "/nestboxes.geojson");
 		FileInputStream inputStream = new FileInputStream(nestboxFile);
 
 		NestBoxFeatureCollection  featureCollection= objectMapper.readValue(inputStream,

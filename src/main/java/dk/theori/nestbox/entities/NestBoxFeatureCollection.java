@@ -8,9 +8,11 @@ import java.util.ArrayList;
 public class NestBoxFeatureCollection {
 
     ArrayList<NestBox> features;
-    String typeName; //GeoJson standard
+    String name; //GeoJson standard: name of featuretype
 
-    String type; //GeoJSON standard
+    String type; //GeoJSON standard: featurecollection
+
+    Object crs; // GeoJson standard: Coordinate reference system
 
     public ArrayList<NestBox> getFeatures() {
         return this.features;
