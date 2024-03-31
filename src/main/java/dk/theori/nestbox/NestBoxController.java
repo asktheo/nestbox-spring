@@ -5,9 +5,10 @@ import dk.theori.nestbox.repositories.NestBoxMongoRepository;
 import dk.theori.nestbox.repositories.NestBoxRecordMongoRepository;
 import dk.theori.nestbox.repositories.NestBoxStatusRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -108,10 +109,20 @@ public class NestBoxController {
     }
 
     @PostMapping("record/add")
-    public void record(@RequestBody() NestBoxRecord record){
+    public ResponseEntity<String> record(@RequestBody() NestBoxRecord record){
         if(record.getDatetime() == null){ record.setDatetime(LocalDateTime.now());}
+        if(record.getStatus() == null) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+        else try{
+            record.setStatus(fixStatus(record));
+        }
+        catch(Exception ex){
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
 
         this.nestBoxRecordMongoRepository.insert(record);
+        return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
     @PostMapping("status")
@@ -178,6 +189,12 @@ public class NestBoxController {
 
     }
 
+    private NestBoxStatus fixStatus(NestBoxRecord box) throws NoSuchElementException{
+        List<NestBoxStatus> allowedStatus = nestBoxStatusRepository.findAll();
+        Optional<NestBoxStatus> status1 = allowedStatus.stream()
+                .filter(s-> s.getStatusName().equals(box.getStatus().getStatusName())).findAny();
+        return status1.get();
+    }
 
 
 
