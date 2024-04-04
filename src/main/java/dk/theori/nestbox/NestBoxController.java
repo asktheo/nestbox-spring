@@ -1,10 +1,7 @@
 package dk.theori.nestbox;
 
 import dk.theori.nestbox.entities.*;
-import dk.theori.nestbox.repositories.NestBoxMongoRepository;
-import dk.theori.nestbox.repositories.NestBoxRecordMongoRepository;
-import dk.theori.nestbox.repositories.NestBoxStatusRepository;
-import dk.theori.nestbox.repositories.ZoneMongoRepository;
+import dk.theori.nestbox.repositories.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +26,9 @@ public class NestBoxController {
 
     @Autowired
     private ZoneMongoRepository zoneMongoRepository;
+
+    @Autowired
+    private SpeciesMongoRepository speciesMongoRepository;
 
     @GetMapping("")
     public List<NestBoxProperties> nestBoxProperties(
@@ -202,7 +202,18 @@ public class NestBoxController {
 
     @GetMapping("zones")
     public List<Zone> getZones(){
-        return zoneMongoRepository.findAll().stream().toList();
+        return zoneMongoRepository.findAll();
+    }
+
+    @GetMapping("species")
+    public List<Species> getAllSpecies() {
+        return speciesMongoRepository.findAll();
+    }
+
+    @PostMapping("species")
+    public ResponseEntity<String> addSpecies(@RequestBody() Species species){
+        speciesMongoRepository.insert(species);
+        return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
 
