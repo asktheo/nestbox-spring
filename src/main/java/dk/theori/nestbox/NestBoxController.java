@@ -4,6 +4,7 @@ import dk.theori.nestbox.entities.*;
 import dk.theori.nestbox.repositories.NestBoxMongoRepository;
 import dk.theori.nestbox.repositories.NestBoxRecordMongoRepository;
 import dk.theori.nestbox.repositories.NestBoxStatusRepository;
+import dk.theori.nestbox.repositories.ZoneMongoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +26,9 @@ public class NestBoxController {
 
     @Autowired
     private NestBoxStatusRepository nestBoxStatusRepository;
+
+    @Autowired
+    private ZoneMongoRepository zoneMongoRepository;
 
     @GetMapping("")
     public List<NestBoxProperties> nestBoxProperties(
@@ -194,6 +198,11 @@ public class NestBoxController {
         Optional<NestBoxStatus> status1 = allowedStatus.stream()
                 .filter(s-> s.getStatusName().equals(box.getStatus().getStatusName())).findAny();
         return status1.get();
+    }
+
+    @GetMapping("zones")
+    public List<Zone> getZones(){
+        return zoneMongoRepository.findAll().stream().toList();
     }
 
 
