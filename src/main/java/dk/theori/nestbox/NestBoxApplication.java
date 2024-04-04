@@ -7,8 +7,10 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import dk.theori.nestbox.entities.NestBox;
 import dk.theori.nestbox.entities.NestBoxFeatureCollection;
 import dk.theori.nestbox.entities.NestBoxRecord;
+import dk.theori.nestbox.entities.Zone;
 import dk.theori.nestbox.repositories.NestBoxMongoRepository;
 import dk.theori.nestbox.repositories.NestBoxRecordMongoRepository;
+import dk.theori.nestbox.repositories.ZoneMongoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -16,6 +18,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 @SpringBootApplication
@@ -26,6 +30,9 @@ public class NestBoxApplication implements CommandLineRunner {
 
 	@Autowired
 	private NestBoxRecordMongoRepository nestBoxRecordMongoRepository;
+
+	@Autowired
+	private ZoneMongoRepository zoneMongoRepository;
 
 	private static final String JSON_DIR = System.getenv("JSON_DIR");
 
@@ -65,13 +72,45 @@ public class NestBoxApplication implements CommandLineRunner {
 		File nestboxFile = new File(JSON_DIR + "/nestboxes.geojson");
 		FileInputStream inputStream = new FileInputStream(nestboxFile);
 
-		NestBoxFeatureCollection  featureCollection= objectMapper.readValue(inputStream,
+		NestBoxFeatureCollection featureCollection= objectMapper.readValue(inputStream,
 				new TypeReference<>() {
 		});
 
 		// insert nestboxes to "nestbox" collection
 		List<NestBox> nestboxes = nestBoxMongoRepository.insert(featureCollection.getFeatures());
+
+		//retrieve and insert zones to DB
+		System.out.printf("%d zones found and inserted",insertZones(nestboxes));
+
 		return nestboxes.size();
+	}
+
+	private long insertZones(List<NestBox> nestBoxes){
+		//clear and insert zones
+		zoneMongoRepository.deleteAll();
+		HashMap<String,ArrayList<Integer>> zones = new HashMap<>();
+
+		//clumsy way to reduce and finding unique zone numbers, but it works and we add the boxes to a list
+		for ( NestBox nb : nestBoxes){
+			if(!zones.containsKey(nb.getZone())){
+				ArrayList<Integer> boxes = new ArrayList<>();
+				boxes.add(nb.getFid());
+				zones.put(nb.getZone(), boxes);
+			}
+			else
+			{
+				zones.get(nb.getZone()).add(nb.getFid());
+			}
+
+		}
+		//insert in repository
+		for(String zoneNumber : zones.keySet()){
+			Zone zone = new Zone();
+			zone.setZoneId(zoneNumber);
+			zone.setBoxIds(zones.get(zoneNumber));
+			zoneMongoRepository.insert(zone);
+		}
+		return zoneMongoRepository.count();
 	}
 
 	private Integer insertNestBoxRecordsFromFile() throws Exception {
