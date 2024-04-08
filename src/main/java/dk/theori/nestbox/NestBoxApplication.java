@@ -46,7 +46,7 @@ public class NestBoxApplication implements CommandLineRunner {
 		if(nestBoxMongoRepository.findAll().isEmpty()){
 			try{
 				Integer count = insertNestBoxesFromFile();
-				System.out.printf("%s nest boxes inserted in Mongo DB", count);
+				System.out.printf("%s nest boxes inserted in Mongo DB\n", count);
 			}
 			catch(Exception e){
 				System.out.println(e.getMessage());
@@ -55,7 +55,7 @@ public class NestBoxApplication implements CommandLineRunner {
 		if(nestBoxRecordMongoRepository.findAll().isEmpty()){
 			try{
 				Integer count = insertNestBoxRecordsFromFile();
-				System.out.printf("%s records inserted in Mongo DB", count);
+				System.out.printf("%s records inserted in Mongo DB\n", count);
 
 			}
 			catch(Exception e){

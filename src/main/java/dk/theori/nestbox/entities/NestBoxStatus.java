@@ -8,7 +8,6 @@ import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 @Document(collection = "status")
 @RepositoryRestResource(exported = false)
 public class NestBoxStatus {
-    String statusName;
-    Integer intervalInDaysSelected;
-
+    private String statusName;
+    private Integer intervalInDaysSelected;
 }

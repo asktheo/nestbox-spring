@@ -51,9 +51,6 @@ public class NestBox {
         return properties.getIsOffline();
     }
 
-    @JsonIgnore
-    public String getOrientation(){ return properties.getOrientation(); }
-
     public void setIsOffline(Boolean isOffline){
         properties.setIsOffline(isOffline);
     }

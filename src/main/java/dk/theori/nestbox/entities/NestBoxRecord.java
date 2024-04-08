@@ -22,6 +22,6 @@ public class NestBoxRecord {
     NestBoxStatus status;
     NestingDetails nesting;
     String[] rings;
-
+    String userEmail;
 }
 

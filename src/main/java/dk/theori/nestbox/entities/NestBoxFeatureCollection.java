@@ -1,19 +1,18 @@
 package dk.theori.nestbox.entities;
 
 import lombok.Data;
-import lombok.Getter;
 
 import java.util.ArrayList;
 
 @Data
 public class NestBoxFeatureCollection {
 
-    @Getter
     ArrayList<NestBox> features;
-    String name; //GeoJson standard: name of featuretype
+    String typeName; //GeoJson standard
 
-    String type; //GeoJSON standard: featurecollection
+    String type; //GeoJSON standard
 
-    Object crs; // GeoJson standard: Coordinate reference system
-
+    public ArrayList<NestBox> getFeatures() {
+        return this.features;
+    }
 }

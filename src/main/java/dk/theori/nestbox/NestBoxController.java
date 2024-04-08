@@ -1,16 +1,18 @@
 package dk.theori.nestbox;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.theori.nestbox.entities.*;
-import dk.theori.nestbox.repositories.NestBoxMongoRepository;
-import dk.theori.nestbox.repositories.NestBoxRecordMongoRepository;
-import dk.theori.nestbox.repositories.NestBoxStatusRepository;
-import dk.theori.nestbox.repositories.ZoneMongoRepository;
+import dk.theori.nestbox.repositories.*;
+import dk.theori.nestbox.utils.ImportUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @CrossOrigin
@@ -29,6 +31,7 @@ public class NestBoxController {
 
     @Autowired
     private ZoneMongoRepository zoneMongoRepository;
+
 
     @GetMapping("")
     public List<NestBoxProperties> nestBoxProperties(
@@ -202,7 +205,56 @@ public class NestBoxController {
 
     @GetMapping("zones")
     public List<Zone> getZones(){
-        return zoneMongoRepository.findAll().stream().toList();
+        return zoneMongoRepository.findAll();
+    }
+
+    @PostMapping("records/translate")
+    public List<NestBoxRecord> translateRecords(@RequestBody() String tsv) {
+        try {
+            return tsv2Records(tsv).stream().map(p -> {
+                NestBoxRecord r = new NestBoxRecord();
+                NestingDetails nd = new NestingDetails();
+                nd.setChicks(p.getUnger() == null || p.getUnger().isEmpty() ? null : Integer.parseInt(p.getUnger()));
+                nd.setEggs(p.getÆg() == null || p.getÆg().isEmpty() ? null : Integer.parseInt(p.getÆg()));
+                nd.setSpecies(p.getArt());
+                r.setNesting(nd);
+
+                Optional<NestBox> nb = nestBoxMongoRepository.findAll().stream().filter(n -> n.getBoxId().equals(p.getKasse_nummer())).findAny();
+                nb.ifPresent(nestBox -> r.setFid(nestBox.getFid()));
+                NestBoxStatus status = new NestBoxStatus();
+                status.setStatusName(p.getStatus());
+                List<NestBoxStatus> statuses = nestBoxStatusRepository.findAll().stream().toList();
+                Optional<NestBoxStatus> foundStatus = statuses.stream().filter(s -> s.getStatusName().equalsIgnoreCase(p.getStatus())).findAny();
+                foundStatus.ifPresent(nestBoxStatus -> status.setIntervalInDaysSelected(nestBoxStatus.getIntervalInDaysSelected()));
+                r.setStatus(status);
+                r.setComment(p.getBemærkninger());
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH.mm.ss").localizedBy(new Locale("da", "DK"));
+                LocalDateTime dateTime = LocalDateTime.parse(p.getTidsstempel(), formatter);
+                r.setDatetime(dateTime);
+                r.setUserEmail(p.getMailadresse());
+
+                return r;
+            }).toList();
+        }
+        catch(Exception ex){
+            return new ArrayList<>();
+        }
+
+    }
+    @PostMapping("records/import")
+    public List<NestBoxRecord> importRecords(@RequestBody() String tsv) {
+        List<NestBoxRecord> records2Import=translateRecords(tsv);
+        nestBoxRecordMongoRepository.insert(records2Import);
+    return nestBoxRecordMongoRepository.findAll();
+    }
+
+    private List<RecordFromTSV> tsv2Records(String tsv) throws JsonProcessingException {
+
+        String json = ImportUtil.TSV2Json(tsv);
+        ObjectMapper mapper = new ObjectMapper();
+
+        return mapper.readValue(json, new TypeReference<>(){});
+
     }
 
 
