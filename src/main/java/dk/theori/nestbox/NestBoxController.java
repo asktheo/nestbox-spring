@@ -32,6 +32,8 @@ public class NestBoxController {
     @Autowired
     private ZoneMongoRepository zoneMongoRepository;
 
+    @Autowired
+    private SpeciesMongoRepository speciesMongoRepository;
 
     @GetMapping("")
     public List<NestBoxProperties> nestBoxProperties(
@@ -208,10 +210,23 @@ public class NestBoxController {
         return zoneMongoRepository.findAll();
     }
 
+    @GetMapping("species")
+    public List<Species> getAllSpecies() {
+        return speciesMongoRepository.findAll();
+    }
+
+    @PostMapping("species")
+    public ResponseEntity<String> addSpecies(@RequestBody() Species species){
+        speciesMongoRepository.insert(species);
+        return new ResponseEntity<>(HttpStatus.CREATED);
+    }
+
     @PostMapping("records/translate")
-    public List<NestBoxRecord> translateRecords(@RequestBody() String tsv) {
-        try {
-            return tsv2Records(tsv).stream().map(p -> {
+    public List<NestBoxRecord> translateRecords(@RequestBody() String tsv) throws JsonProcessingException {
+            return tsv2Records(tsv)
+                    .stream()
+                    .filter(p -> p.getTidsstempel() != null)
+                    .map(p -> {
                 NestBoxRecord r = new NestBoxRecord();
                 NestingDetails nd = new NestingDetails();
                 nd.setChicks(p.getUnger() == null || p.getUnger().isEmpty() ? null : Integer.parseInt(p.getUnger()));
@@ -235,14 +250,10 @@ public class NestBoxController {
 
                 return r;
             }).toList();
-        }
-        catch(Exception ex){
-            return new ArrayList<>();
-        }
 
     }
     @PostMapping("records/import")
-    public List<NestBoxRecord> importRecords(@RequestBody() String tsv) {
+    public List<NestBoxRecord> importRecords(@RequestBody() String tsv) throws JsonProcessingException {
         List<NestBoxRecord> records2Import=translateRecords(tsv);
         nestBoxRecordMongoRepository.insert(records2Import);
     return nestBoxRecordMongoRepository.findAll();
