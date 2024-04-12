@@ -2,11 +2,8 @@ package dk.theori.nestbox;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import dk.theori.nestbox.entities.NestBox;
 import dk.theori.nestbox.entities.NestBoxFeatureCollection;
-import dk.theori.nestbox.entities.NestBoxRecord;
 import dk.theori.nestbox.entities.Zone;
 import dk.theori.nestbox.repositories.NestBoxMongoRepository;
 import dk.theori.nestbox.repositories.NestBoxRecordMongoRepository;
@@ -52,16 +49,7 @@ public class NestBoxApplication implements CommandLineRunner {
 				System.out.println(e.getMessage());
 			}
 		}
-		if(nestBoxRecordMongoRepository.findAll().isEmpty()){
-			try{
-				Integer count = insertNestBoxRecordsFromFile();
-				System.out.printf("%s records inserted in Mongo DB\n", count);
 
-			}
-			catch(Exception e){
-				System.out.println(e.getMessage());
-			}
-		}
 
 	}
 
@@ -113,22 +101,5 @@ public class NestBoxApplication implements CommandLineRunner {
 		return zoneMongoRepository.count();
 	}
 
-	private Integer insertNestBoxRecordsFromFile() throws Exception {
-		ObjectMapper mapper = new ObjectMapper();
-		mapper.registerModule(new JavaTimeModule());
-		mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-
-		File nestboxrecordFile = new File(JSON_DIR + "/nestboxrecords.json");
-		FileInputStream inputStream = new FileInputStream(nestboxrecordFile);
-
-		List<NestBoxRecord> nestBoxRecords = mapper.readValue(inputStream,
-                new TypeReference<>() {
-
-                });
-
-		//insert records to "records" collection.
-		List<NestBoxRecord> inserted = nestBoxRecordMongoRepository.insert(nestBoxRecords);
-		return inserted.size();
-	}
 
 }
