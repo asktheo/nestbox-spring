@@ -11,7 +11,7 @@
 	<packaging>war</packaging>
 	<groupId>dk.theori</groupId>
 	<artifactId>nestbox</artifactId>
-	<version>0.0.2-SNAPSHOT</version>
+	<version>0.0.4-SNAPSHOT</version>
 	<name>nestbox</name>
 	<description>Nestbox survey project</description>
 	<properties>
@@ -47,7 +47,7 @@
 			<artifactId>lombok</artifactId>
 			<scope>provided</scope>
 		</dependency>
-	</dependencies>
+    </dependencies>
 
 	<build>
 		<plugins>
