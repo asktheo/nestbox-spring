@@ -3,13 +3,13 @@
 /nestbox.iml
 .DS_Store
 
-# Compiled class file and maven output
+# Compiled class file
 *.class
 /target/
 
-# Log file
+# Log files and zipped log files
 *.log
-/nestbox-application.log.*
+*.log.*.gz
 
 # BlueJ files
 *.ctxt
@@ -26,11 +26,12 @@
 *.tar.gz
 *.rar
 
+#public and private keys
+*.key
+*.pem
+
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
 
 
-/src/main/resources/rsa-2048bit.key
-/src/main/resources/rsa-2048bit.secure.key
-/src/main/resources/rsa-2048bit-key-pair.pem
