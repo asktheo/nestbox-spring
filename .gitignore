@@ -1,8 +1,15 @@
-# Compiled class file
+#IDE
+/.idea/
+/nestbox.iml
+.DS_Store
+
+# Compiled class file and maven output
 *.class
+/target/
 
 # Log file
 *.log
+/nestbox-application.log.*
 
 # BlueJ files
 *.ctxt
@@ -22,7 +29,8 @@
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
-/target/
-/.idea/
-/nestbox.iml
-.DS_Store
+
+
+/src/main/resources/rsa-2048bit.key
+/src/main/resources/rsa-2048bit.secure.key
+/src/main/resources/rsa-2048bit-key-pair.pem
