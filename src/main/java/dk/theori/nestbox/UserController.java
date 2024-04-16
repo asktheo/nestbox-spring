@@ -18,7 +18,7 @@ public class UserController {
     @Autowired
     private ApplicationContext context;
 
-    @PostMapping
+    @PostMapping("save")
     public String saveUser(@RequestBody User user){
         BCryptPasswordEncoder bCryptPasswordEncoder = context.getBean(BCryptPasswordEncoder.class);
         user.setPassword(bCryptPasswordEncoder
