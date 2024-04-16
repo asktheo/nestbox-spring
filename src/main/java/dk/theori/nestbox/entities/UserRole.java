@@ -1,13 +1,19 @@
 package dk.theori.nestbox.entities;
 
 import lombok.Data;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 
+/**
+ * Modified from UserRole in medium article by Zeeshan Adil
+ */
 @Data
-@Document(collection = "user")
+@Document(collection = "role")
 @RepositoryRestResource(exported = false)
-public class User {
-    private String username;
-    private String password;
+public class UserRole {
+
+    @Id
+    private long id;
+    private String name;
 }

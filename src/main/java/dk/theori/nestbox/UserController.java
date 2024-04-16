@@ -1,6 +1,6 @@
 package dk.theori.nestbox;
 
-import dk.theori.nestbox.entities.User;
+import dk.theori.nestbox.entities.UserInfo;
 import dk.theori.nestbox.repositories.UserMongoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -19,7 +19,7 @@ public class UserController {
     private ApplicationContext context;
 
     @PostMapping("save")
-    public String saveUser(@RequestBody User user){
+    public String saveUser(@RequestBody UserInfo user){
         BCryptPasswordEncoder bCryptPasswordEncoder = context.getBean(BCryptPasswordEncoder.class);
         user.setPassword(bCryptPasswordEncoder
                 .encode(user.getPassword()));
