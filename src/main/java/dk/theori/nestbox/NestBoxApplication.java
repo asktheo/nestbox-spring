@@ -2,6 +2,7 @@ package dk.theori.nestbox;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dk.theori.nestbox.env.EnvVariables;
 import dk.theori.nestbox.entities.NestBox;
 import dk.theori.nestbox.entities.NestBoxFeatureCollection;
 import dk.theori.nestbox.entities.Zone;
@@ -24,6 +25,7 @@ import java.util.List;
 @SpringBootApplication
 public class NestBoxApplication implements CommandLineRunner {
 
+
 	@Autowired
 	private NestBoxMongoRepository nestBoxMongoRepository;
 
@@ -38,7 +40,14 @@ public class NestBoxApplication implements CommandLineRunner {
 		return new BCryptPasswordEncoder();
 	}
 
-	private static final String JSON_DIR = System.getenv("JSON_DIR");
+
+	@Bean
+	public EnvVariables envVariables() {
+		EnvVariables envVariables = new EnvVariables();
+		envVariables.addKey(EnvVariables.SECRET, System.getenv(EnvVariables.SECRET));
+		envVariables.addKey(EnvVariables.JSON_DIR, System.getenv(EnvVariables.JSON_DIR));
+		return envVariables;
+	}
 
 	public static void main(String[] args) {
 		SpringApplication.run(NestBoxApplication.class, args);
@@ -46,6 +55,7 @@ public class NestBoxApplication implements CommandLineRunner {
 	}
 
 	public void run(String... args){
+
 
 		if(nestBoxMongoRepository.findAll().isEmpty()){
 			try{
@@ -64,7 +74,7 @@ public class NestBoxApplication implements CommandLineRunner {
 		ObjectMapper objectMapper = new ObjectMapper();
 
 		// Read JSON resource file
-		File nestboxFile = new File(JSON_DIR + "/nestboxes.geojson");
+		File nestboxFile = new File(envVariables().getEnvVariable(EnvVariables.JSON_DIR) + "/nestboxes.geojson");
 		FileInputStream inputStream = new FileInputStream(nestboxFile);
 
 		NestBoxFeatureCollection featureCollection= objectMapper.readValue(inputStream,

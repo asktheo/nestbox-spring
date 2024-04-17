@@ -1,11 +1,12 @@
 package dk.theori.nestbox;
 
+import dk.theori.nestbox.env.EnvVariables;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
@@ -23,8 +24,12 @@ import java.util.function.Function;
 @Component
 public class JwtService {
 
-    //TODO: @Value("${...}") change SECRET and store in properties
-    public static final String SECRET = "357638792F423F4428472B4B6250655368566D597133743677397A2443264629";
+    private final ApplicationContext context;
+
+    public JwtService(ApplicationContext context) {
+        this.context = context;
+    }
+
     public static final Long EXPIRY = 122*24*60*60*1000L; //4 months
 
     public String extractUsername(String token) {
@@ -74,7 +79,8 @@ public class JwtService {
     }
 
     private Key getSignKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(SECRET);
+        EnvVariables envVariables = context.getBean(EnvVariables.class);
+        byte[] keyBytes = Decoders.BASE64.decode(envVariables.getEnvVariable(EnvVariables.SECRET));
         return Keys.hmacShaKeyFor(keyBytes);
     }
 }
