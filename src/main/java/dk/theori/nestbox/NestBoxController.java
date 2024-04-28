@@ -7,10 +7,13 @@ import dk.theori.nestbox.entities.*;
 import dk.theori.nestbox.repositories.*;
 import dk.theori.nestbox.utils.ImportUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.datetime.DateFormatter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.text.ParseException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -100,7 +103,7 @@ public class NestBoxController {
     public NestBoxRecord newNestBoxRecord(@PathVariable("fid") Integer fid){
         NestBoxRecord record = new NestBoxRecord();
         record.setFid(fid);
-        record.setDatetime(LocalDateTime.now());
+        record.setRecorddate(LocalDate.now());
         record.setStatus(new NestBoxStatus());
         record.setNesting(new NestingDetails());
         //rings is an interval (from ring #, to ring #)
@@ -113,13 +116,14 @@ public class NestBoxController {
         Optional<NestBoxRecord> latestRecord = nestBoxRecordMongoRepository.findAll()
                 .stream()
                 .filter(rec -> fid.equals(rec.getFid()))
-                .max(Comparator.comparing(NestBoxRecord::getDatetime));
+                .max(Comparator.comparing(NestBoxRecord::getRecorddate));
         return latestRecord.orElse(null);
     }
 
     @PostMapping("record/add")
     public ResponseEntity<String> record(@RequestBody() NestBoxRecord record){
         if(record.getDatetime() == null){ record.setDatetime(LocalDateTime.now());}
+        if(record.getRecorddate() == null) {record.setRecorddate((LocalDate.now()));}
         if(record.getStatus() == null) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
@@ -147,7 +151,7 @@ public class NestBoxController {
 
     @GetMapping("checkme")
     public HashMap<String, List<NestBoxProperties>> getNestBoxesForChecking(@RequestParam(value ="before", required=false) Integer beforeInDays){
-        LocalDateTime beforeDateTime = LocalDateTime.now().plusDays((beforeInDays == null) ? 7 : beforeInDays);
+        LocalDate beforeDate = LocalDate.now().plusDays((beforeInDays == null) ? 7 : beforeInDays);
 
         //find records for all Nestboxes not offline
         List<NestBox> allActiveNestBoxes = this.nestBoxMongoRepository.findAll()
@@ -164,7 +168,7 @@ public class NestBoxController {
             NestBoxRecord latest = latestNestBoxRecord(b.getFid());
             //add if the date to be checked is before the date constructed from the query (default now + 7d)
             if(latest != null) {
-               if(latest.getDatetime().plusDays(latest.getStatus().getIntervalInDaysSelected()).isBefore(beforeDateTime)){
+               if(latest.getRecorddate().plusDays(latest.getStatus().getIntervalInDaysSelected()).isBefore(beforeDate)){
                    latestRecordsForBoxesToBeChecked.add(latest);
                }
                else{
@@ -233,7 +237,6 @@ public class NestBoxController {
                 nd.setEggs(p.getÆg() == null || p.getÆg().isEmpty() ? null : Integer.parseInt(p.getÆg()));
                 nd.setSpecies(p.getArt());
                 r.setNesting(nd);
-
                 Optional<NestBox> nb = nestBoxMongoRepository.findAll().stream().filter(n -> n.getBoxId().equals(p.getKasse_nummer())).findAny();
                 nb.ifPresent(nestBox -> r.setFid(nestBox.getFid()));
                 NestBoxStatus status = new NestBoxStatus();
@@ -242,12 +245,14 @@ public class NestBoxController {
                 Optional<NestBoxStatus> foundStatus = statuses.stream().filter(s -> s.getStatusName().equalsIgnoreCase(p.getStatus())).findAny();
                 foundStatus.ifPresent(nestBoxStatus -> status.setIntervalInDaysSelected(nestBoxStatus.getIntervalInDaysSelected()));
                 r.setStatus(status);
-                r.setComment(p.getBemærkninger());
+                r.setComment(p.getBemærkninger());//tidsstempel
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH.mm.ss").localizedBy(new Locale("da", "DK"));
                 LocalDateTime dateTime = LocalDateTime.parse(p.getTidsstempel(), formatter);
                 r.setDatetime(dateTime);
+                //dato
+                DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy").localizedBy(new Locale("da","DK"));
+                r.setRecorddate(LocalDate.parse(p.getDato(), dateFormatter));
                 r.setUserEmail(p.getMailadresse());
-
                 return r;
             }).toList();
 
