@@ -7,6 +7,8 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 
+import java.util.List;
+
 @Data
 @Document(collection = "nestbox")
 @RepositoryRestResource(exported = false)
@@ -17,6 +19,9 @@ public class NestBox {
     private NestBoxProperties properties;
     private NestBoxGeometry geometry;
     private String type;
+
+    @JsonIgnore
+    private List<NestBoxRecord> records;
 
     /*
     - unique identifier fid is nested

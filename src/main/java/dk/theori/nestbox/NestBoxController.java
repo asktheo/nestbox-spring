@@ -4,22 +4,31 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.theori.nestbox.entities.*;
+import dk.theori.nestbox.inout.XSLGenerator;
 import dk.theori.nestbox.repositories.*;
+import dk.theori.nestbox.utils.CheckCalculator;
 import dk.theori.nestbox.utils.ImportUtil;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.datetime.DateFormatter;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.text.ParseException;
 import java.time.LocalDate;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @CrossOrigin
 @RestController()
+@Slf4j
 @RequestMapping("nestbox")
 public class NestBoxController {
 
@@ -150,56 +159,19 @@ public class NestBoxController {
     }
 
     @GetMapping("checkme")
-    public HashMap<String, List<NestBoxProperties>> getNestBoxesForChecking(@RequestParam(value ="before", required=false) Integer beforeInDays){
-        LocalDate beforeDate = LocalDate.now().plusDays((beforeInDays == null) ? 7 : beforeInDays);
+    public NestBoxCheckList getNestBoxesForChecking(@RequestParam(value ="before", required=false) Integer beforeInDays){
 
-        //find records for all Nestboxes not offline
-        List<NestBox> allActiveNestBoxes = this.nestBoxMongoRepository.findAll()
-                .stream()
-                .filter(nestBox -> !nestBox.getProperties().getIsOffline())
-                .toList();
-        //list for boxes to be checked within bounds for check criteria in data and request
-        List<NestBoxRecord> latestRecordsForBoxesToBeChecked = new ArrayList<>();
-        //list for boxes already checked and outside bounds for check criteria in data and request
-        List<NestBoxRecord> latestRecordsForBoxesChecked = new ArrayList<>();
-        //unchecked boxes
-        List<NestBoxProperties> boxesNotChecked = new ArrayList<>();
-        for(NestBox b : allActiveNestBoxes){
-            NestBoxRecord latest = latestNestBoxRecord(b.getFid());
-            //add if the date to be checked is before the date constructed from the query (default now + 7d)
-            if(latest != null) {
-               if(latest.getRecorddate().plusDays(latest.getStatus().getIntervalInDaysSelected()).isBefore(beforeDate)){
-                   latestRecordsForBoxesToBeChecked.add(latest);
-               }
-               else{
-                   latestRecordsForBoxesChecked.add(latest);
-               }
-            }
-            else
-                boxesNotChecked.add(b.getProperties());
-        }
         //use controller method to get all box properties
-        List<NestBoxProperties> pAllActiveBoxes = nestBoxProperties(null,null,null, false);
-
-        //Hashmap for returning two lists with names:
-        HashMap returnLists = new HashMap<String, List<NestBoxProperties>>();
-
-        //match the records with NestBoxProperties
-        List<NestBoxProperties> boxesForChecking = pAllActiveBoxes.stream()
-                .filter(p -> latestRecordsForBoxesToBeChecked.stream().anyMatch(r -> r.getFid() == p.getFid()))
-                .toList();
-
-        List<NestBoxProperties> boxesChecked = pAllActiveBoxes.stream()
-                .filter(p -> latestRecordsForBoxesChecked.stream().anyMatch(t -> t.getFid() == p.getFid()))
-                .toList();
-
-        //put results in HasHMap:
-        returnLists.put("boxesForChecking", boxesForChecking);
-        returnLists.put("boxesNotChecked", boxesNotChecked);
-        returnLists.put("boxesChecked", boxesChecked);
-
-        return returnLists;
-
+        List<NestBox> pAllActiveBoxes = nestBoxFeatures(null,null,null, false);
+        for(NestBox b : pAllActiveBoxes){
+            List<NestBoxRecord> records = new ArrayList<>();
+            //TODO implement that all records for the box can be added here
+            NestBoxRecord record = latestNestBoxRecord(b.getFid());
+            if (record != null)
+                records.add(record);
+            b.setRecords(records);
+        }
+        return CheckCalculator.calcuLatest(pAllActiveBoxes, beforeInDays);
     }
 
     private NestBoxStatus fixStatus(NestBoxRecord box) throws NoSuchElementException{
@@ -271,6 +243,27 @@ public class NestBoxController {
 
         return mapper.readValue(json, new TypeReference<>(){});
 
+    }
+
+    @GetMapping("download/checkme")
+    public ResponseEntity<byte[]>  downloadBoxesForChecking(@RequestParam(value ="before", required=false) Integer beforeInDays){
+
+        NestBoxCheckList nestBoxesForChecking = getNestBoxesForChecking(beforeInDays);
+
+
+            try (Workbook workbook = XSLGenerator.generateXSLCheckList(nestBoxesForChecking, beforeInDays)) {
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                workbook.write(outputStream);
+
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+                headers.setContentDispositionFormData("attachment", "checklist.xlsx");
+
+                return new ResponseEntity<>(outputStream.toByteArray(), headers, HttpStatus.OK);
+            } catch (IOException e) {
+                log.error(e.getLocalizedMessage());
+                return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+            }
     }
 
 
