@@ -12,6 +12,8 @@ public class NestBoxFeatureCollection {
 
     String type; //GeoJSON standard
 
+
+
     public ArrayList<NestBox> getFeatures() {
         return this.features;
     }

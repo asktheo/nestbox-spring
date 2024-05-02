@@ -1,7 +1,6 @@
 {
 "type": "FeatureCollection",
-"name": "nestboxes",
-"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"typeName": "nestboxes",
 "features": [
 { "type": "Feature", "properties": { "fid": 1, "altitude": 2, "boxId": "1", "zone": "4", "orientation": null }, "geometry": { "type": "Point", "coordinates": [ 12.543076763662622, 55.882950603507012 ] } },
 { "type": "Feature", "properties": { "fid": 2, "altitude": 2, "boxId": "2", "zone": "4", "orientation": null }, "geometry": { "type": "Point", "coordinates": [ 12.543105330123065, 55.882945406730258 ] } },
