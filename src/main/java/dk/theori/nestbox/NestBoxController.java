@@ -26,6 +26,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
+import static com.mongodb.assertions.Assertions.assertFalse;
+
 @CrossOrigin
 @RestController()
 @Slf4j
@@ -162,7 +164,11 @@ public class NestBoxController {
     public NestBoxCheckList getNestBoxesForChecking(@RequestParam(value ="before", required=false) Integer beforeInDays){
 
         //use controller method to get all box properties
-        List<NestBox> pAllActiveBoxes = nestBoxFeatures(null,null,null, false);
+        List<NestBox> pAllActiveBoxes = this.nestBoxMongoRepository
+                .findAll().stream()
+                .filter(nestBox  -> !Boolean.TRUE.equals(nestBox.getIsOffline()))
+                .toList();
+        assertFalse(pAllActiveBoxes.isEmpty());
         for(NestBox b : pAllActiveBoxes){
             List<NestBoxRecord> records = new ArrayList<>();
             //TODO implement that all records for the box can be added here
@@ -250,20 +256,13 @@ public class NestBoxController {
 
         NestBoxCheckList nestBoxesForChecking = getNestBoxesForChecking(beforeInDays);
 
+        ByteArrayOutputStream out = XSLGenerator.generateXSLCheckList(nestBoxesForChecking, beforeInDays);
 
-            try (Workbook workbook = XSLGenerator.generateXSLCheckList(nestBoxesForChecking, beforeInDays)) {
-                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                workbook.write(outputStream);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDispositionFormData("attachment", "tjeklister.xlsx");
 
-                HttpHeaders headers = new HttpHeaders();
-                headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-                headers.setContentDispositionFormData("attachment", "checklist.xlsx");
-
-                return new ResponseEntity<>(outputStream.toByteArray(), headers, HttpStatus.OK);
-            } catch (IOException e) {
-                log.error(e.getLocalizedMessage());
-                return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-            }
+        return new ResponseEntity<>(out.toByteArray(), headers, HttpStatus.OK);
     }
 
 
