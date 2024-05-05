@@ -5,6 +5,7 @@ import dk.theori.nestbox.entities.NestBoxCheckList;
 import dk.theori.nestbox.entities.NestBoxProperties;
 import dk.theori.nestbox.entities.NestBoxRecord;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +14,7 @@ public class CheckCalculator {
 
     public static NestBoxCheckList calcuLatest(List<NestBox> boxes, Integer beforeInDays){
 
+        LocalDate beforeDate = LocalDate.now().plusDays((beforeInDays == null) ? 7 : beforeInDays);
         LocalDateTime beforeDateTime = LocalDateTime.now().plusDays((beforeInDays == null) ? 7 : beforeInDays);
 
         //list for boxes to be checked within bounds for check criteria in data and request
@@ -25,7 +27,7 @@ public class CheckCalculator {
             //add if the date to be checked is before the date constructed from the query (default now + 7d)
             if(!b.getRecords().isEmpty()) {
                 NestBoxRecord latest = b.getRecords().get(0);
-                if(latest.getDatetime().plusDays(latest.getStatus().getIntervalInDaysSelected()).isBefore(beforeDateTime)){
+                if(latest.getRecorddate().plusDays(latest.getStatus().getIntervalInDaysSelected()).isBefore(beforeDate)){
                     latestRecordsForBoxesToBeChecked.add(latest);
                 }
                 else{
