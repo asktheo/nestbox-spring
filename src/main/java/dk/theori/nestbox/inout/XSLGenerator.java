@@ -5,11 +5,11 @@ import dk.theori.nestbox.entities.NestBoxCheckList;
 import dk.theori.nestbox.entities.NestBoxProperties;
 import dk.theori.nestbox.entities.NestBoxRecord;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.ByteArrayOutputStream;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Slf4j
@@ -18,12 +18,18 @@ public class XSLGenerator {
     public static ByteArrayOutputStream generateXSLCheckList(NestBoxCheckList checkList, Integer beforeInDays) {
         try (Workbook workbook = new XSSFWorkbook()) {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            Sheet skalTjekkes = workbook.createSheet(String.format("Tjekkes inden %d dage", beforeInDays));
-            Sheet ikkeTjekket = workbook.createSheet("Ikke tjekket");
-            Sheet tjekket = workbook.createSheet("Tjekket for nyligt");
-            generateSheet(skalTjekkes, checkList.getBoxesForChecking(), String.format("Tjekkes inden %d dage", beforeInDays));
-            generateSheet(ikkeTjekket, checkList.getBoxesNotChecked(), "Ikke tjekket");
-            generateSheet(tjekket, checkList.getBoxesChecked(),"Tjekket for nyligt");
+            //sheet names and titles
+            String toCheckTitle = String.format("Tjekkes inden %d dage", beforeInDays);
+            String notCheckedTitle =  "Ikke tjekket";
+            String recentlyCheckedTitle = "Tjekket for nyligt";
+            //create sheets
+            Sheet skalTjekkes = workbook.createSheet(toCheckTitle);
+            Sheet ikkeTjekket = workbook.createSheet(notCheckedTitle);
+            Sheet tjekket = workbook.createSheet(recentlyCheckedTitle);
+            //generate content on each sheet
+            generateSheetContent(skalTjekkes, checkList.getBoxesForChecking(), toCheckTitle);
+            generateSheetContent(ikkeTjekket, checkList.getBoxesNotChecked(), notCheckedTitle);
+            generateSheetContent(tjekket, checkList.getBoxesChecked(),recentlyCheckedTitle);
             workbook.write(outputStream);
             return outputStream;
         } catch (Exception e) {
@@ -34,7 +40,7 @@ public class XSLGenerator {
     }
 
 
-    private static void generateSheet(Sheet wbSheet, List<NestBoxProperties> boxes, String sheetTitle){
+    private static void generateSheetContent(Sheet wbSheet, List<NestBoxProperties> boxes, String sheetTitle){
 
         // Create header row
 
@@ -75,6 +81,93 @@ public class XSLGenerator {
             row.createCell(1).setCellValue(alt);
             row.createCell(2).setCellValue(zone);
         }
+    }
+
+    public static ByteArrayOutputStream generateXSLRecords(List<NestBox> boxes){
+        try (Workbook workbook = new XSSFWorkbook()) {
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            String sheetTitle = "Udførte Redekassetjek";
+            Sheet wbSheet = workbook.createSheet();
+            int rowNum = 0;
+            Row titleRow = wbSheet.createRow(rowNum);
+            titleRow.setHeight (Short.parseShort(String.valueOf(20*15)));
+            CellStyle cellStyle = wbSheet.getWorkbook().createCellStyle();
+            Font headerFont = wbSheet.getWorkbook().createFont();
+            headerFont.setBold(true);
+            cellStyle.setFont(headerFont);
+            titleRow.setRowStyle(cellStyle);
+            titleRow.createCell(0).setCellValue(sheetTitle);
+            rowNum++;
+            // Create header row
+            Row headerRow = wbSheet.createRow(0);
+            String[] headers = {
+                    "Zone",
+                    "Kasse nummer",
+                    "Tidsstempel",
+                    "Status",
+                    "Dato",
+                    "Art",
+                    "Unger",
+                    "Æg",
+                    "Ringe",
+                    "Bemærkninger",
+            };
+            DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy 'kl.' HH:mm");
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i]);
+            }
+
+            // Populate data rows
+            for (NestBox obj : boxes) {
+
+                List<NestBoxRecord> records = obj.getRecords();
+                String name = obj.getBoxId() + (obj.getOrientation() == null? "": obj.getOrientation());
+                //create a box row which is a group header if there are more
+                Row boxRow = wbSheet.createRow(rowNum++);
+                boxRow.createCell(0).setCellValue(obj.getZone());
+                boxRow.createCell(1).setCellValue(name);
+
+                if(records.size() == 1){
+                    fillRecordRow(records.get(0),2,boxRow, dateTimeFormatter);
+                }
+                else
+                {
+                    for(NestBoxRecord r : records){
+                        Row recRow = wbSheet.createRow(rowNum++);
+                        fillRecordRow(r,2,recRow, dateTimeFormatter);
+                    }
+                }
+
+
+            }
+            workbook.write(outputStream);
+            // Write to OutputStream
+            return outputStream;
+        } catch (Exception e) {
+            log.error(e.getLocalizedMessage());
+            return new ByteArrayOutputStream();
+        }
+    }
+
+    private static int fillRecordRow(NestBoxRecord r, int colIdx, Row recRow, DateTimeFormatter formatter){
+        int idx = colIdx;
+        String dateFormat = r.getDatetime().format(formatter);
+        recRow.createCell(idx++).setCellValue(dateFormat);
+        recRow.createCell(idx++).setCellValue(r.getStatus().getStatusName());
+        recRow.createCell(idx++).setCellValue("dato");
+        if(r.getNesting() != null){
+            recRow.createCell(idx++).setCellValue(r.getNesting().getSpecies());
+            recRow.createCell(idx++).setCellValue(r.getNesting().getEggs() == null ? 0 : r.getNesting().getEggs());
+            recRow.createCell(idx++).setCellValue(r.getNesting().getChicks() == null ? 0 : r.getNesting().getChicks());
+        }
+        else {
+            idx = idx+3;
+        }
+        String rings = r.getRings() == null ? "" : String.join("-",r.getRings());
+        recRow.createCell(idx++).setCellValue(rings);
+        recRow.createCell(idx++).setCellValue(r.getComment());
+        return idx;
     }
 
 }

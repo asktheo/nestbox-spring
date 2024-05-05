@@ -242,6 +242,24 @@ public class NestBoxController {
     return nestBoxRecordMongoRepository.findAll();
     }
 
+    @GetMapping("records/download")
+    public ResponseEntity<byte[]> downloadRecords(){
+
+        List<NestBox> allNestboxes = nestBoxMongoRepository.findAll();
+        List<NestBoxRecord> records = nestBoxRecordMongoRepository.findAll();
+        for(NestBox b : allNestboxes) {
+            b.setRecords(records.stream().filter(r -> r.getFid() == b.getFid()).toList());
+        }
+
+        ByteArrayOutputStream out = XSLGenerator.generateXSLRecords(allNestboxes);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDispositionFormData("attachment", "redekassetjek.xlsx");
+
+        return new ResponseEntity<>(out.toByteArray(), headers, HttpStatus.OK);
+    }
+
     private List<RecordFromTSV> tsv2Records(String tsv) throws JsonProcessingException {
 
         String json = ImportUtil.TSV2Json(tsv);
