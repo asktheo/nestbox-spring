@@ -11,6 +11,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import java.io.ByteArrayOutputStream;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
 
 @Slf4j
 public class XSLGenerator {
@@ -112,7 +113,8 @@ public class XSLGenerator {
                     "Ringe",
                     "Bemærkninger",
             };
-            DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy 'kl.' HH:mm");
+            DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+            DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
             for (int i = 0; i < headers.length; i++) {
                 Cell cell = headerRow.createCell(i);
                 cell.setCellValue(headers[i]);
@@ -129,13 +131,13 @@ public class XSLGenerator {
                 boxRow.createCell(1).setCellValue(name);
 
                 if(records.size() == 1){
-                    fillRecordRow(records.get(0),2,boxRow, dateTimeFormatter);
+                    fillRecordRow(records.get(0),2,boxRow, dateTimeFormatter, dateFormatter);
                 }
                 else
                 {
                     for(NestBoxRecord r : records){
                         Row recRow = wbSheet.createRow(rowNum++);
-                        fillRecordRow(r,2,recRow, dateTimeFormatter);
+                        fillRecordRow(r,2,recRow, dateTimeFormatter, dateFormatter);
                     }
                 }
 
@@ -150,12 +152,13 @@ public class XSLGenerator {
         }
     }
 
-    private static int fillRecordRow(NestBoxRecord r, int colIdx, Row recRow, DateTimeFormatter formatter){
+    private static int fillRecordRow(NestBoxRecord r, int colIdx, Row recRow, DateTimeFormatter formatter, DateTimeFormatter dateFormatter){
         int idx = colIdx;
-        String dateFormat = r.getDatetime().format(formatter);
-        recRow.createCell(idx++).setCellValue(dateFormat);
+        String dateTimeFormat = r.getDatetime().format(formatter);
+        recRow.createCell(idx++).setCellValue(dateTimeFormat);
         recRow.createCell(idx++).setCellValue(r.getStatus().getStatusName());
-        recRow.createCell(idx++).setCellValue("dato");
+        String dateFormat = r.getRecorddate().format(dateFormatter);
+        recRow.createCell(idx++).setCellValue(dateFormat);
         if(r.getNesting() != null){
             recRow.createCell(idx++).setCellValue(r.getNesting().getSpecies());
             recRow.createCell(idx++).setCellValue(r.getNesting().getEggs() == null ? 0 : r.getNesting().getEggs());
