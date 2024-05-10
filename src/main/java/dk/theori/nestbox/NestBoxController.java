@@ -203,6 +203,21 @@ public class NestBoxController {
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
+    @GetMapping("records")
+    public List<NestBox> activeNestBoxesWithRecords(){
+        //use controller method to get all box properties
+        List<NestBox> pAllActiveBoxes = this.nestBoxMongoRepository
+                .findAll().stream()
+                .filter(nestBox  -> !Boolean.TRUE.equals(nestBox.getIsOffline()))
+                .toList();
+        List<NestBoxRecord> allRecords = this.nestBoxRecordMongoRepository
+                .findAll();
+        for(NestBox b : pAllActiveBoxes){
+            b.setRecords(allRecords.stream().filter(r -> r.getFid() == b.getFid()).toList());
+        }
+        return pAllActiveBoxes;
+    }
+
     @PostMapping("records/translate")
     public List<NestBoxRecord> translateRecords(@RequestBody() String tsv) throws JsonProcessingException {
             return tsv2Records(tsv)

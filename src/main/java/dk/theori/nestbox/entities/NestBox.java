@@ -20,7 +20,6 @@ public class NestBox {
     private NestBoxGeometry geometry;
     private String type;
 
-    @JsonIgnore
     private List<NestBoxRecord> records;
 
     /*
