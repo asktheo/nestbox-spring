@@ -1,7 +1,7 @@
 package dk.theori.nestbox.inout;
 
 import dk.theori.nestbox.entities.NestBox;
-import dk.theori.nestbox.entities.NestBoxCheckList;
+import dk.theori.nestbox.entities.NestBoxPropertyCheckList;
 import dk.theori.nestbox.entities.NestBoxProperties;
 import dk.theori.nestbox.entities.NestBoxRecord;
 import lombok.extern.slf4j.Slf4j;
@@ -11,12 +11,11 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import java.io.ByteArrayOutputStream;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Locale;
 
 @Slf4j
 public class XSLGenerator {
 
-    public static ByteArrayOutputStream generateXSLCheckList(NestBoxCheckList checkList, Integer beforeInDays) {
+    public static ByteArrayOutputStream generateXSLCheckList(NestBoxPropertyCheckList checkList, Integer beforeInDays) {
         try (Workbook workbook = new XSSFWorkbook()) {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             //sheet names and titles
