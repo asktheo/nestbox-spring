@@ -108,8 +108,8 @@ public class XSLGenerator {
                     "Status",
                     "Dato",
                     "Art",
-                    "Unger",
                     "Æg",
+                    "Unger",
                     "Ringe",
                     "Bemærkninger",
             };
