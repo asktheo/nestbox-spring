@@ -25,7 +25,7 @@ public class CheckCalculator {
             //add if the date to be checked is before the date constructed from the query (default now + 7d)
             if(!b.getRecords().isEmpty()) {
                 NestBoxRecord latest = b.getRecords().get(0);
-                if(latest.getRecorddate().plusDays(latest.getStatus().getIntervalInDaysSelected()).isBefore(beforeDate)){
+                if(latest.getStatus().getIntervalInDaysSelected() != null && latest.getRecorddate().plusDays(latest.getStatus().getIntervalInDaysSelected()).isBefore(beforeDate)){
                     latestRecordsForBoxesToBeChecked.add(latest);
                 }
                 else{
@@ -72,7 +72,7 @@ public class CheckCalculator {
             //add if the date to be checked is before the date constructed from the query (default now + 7d)
             if(!b.getRecords().isEmpty()) {
                 NestBoxRecord latest = b.getRecords().get(0);
-                if(latest.getRecorddate().plusDays(latest.getStatus().getIntervalInDaysSelected()).isBefore(beforeDate)){
+                if(latest.getStatus().getIntervalInDaysSelected() != null && latest.getRecorddate().plusDays(latest.getStatus().getIntervalInDaysSelected()).isBefore(beforeDate)){
                     latestRecordsForBoxesToBeChecked.add(latest);
                 }
                 else{

@@ -84,14 +84,15 @@ public class NestBoxController {
     @GetMapping("feature/{fid}")
 
     public NestBox nestBoxFeatureById(@PathVariable("fid") Integer fid){
-        List<NestBox> allNestBoxes = nestBoxMongoRepository.findAll();
-
-        Optional<NestBox> optNestBox = allNestBoxes
-                .stream()
-                .filter(nestBox -> fid.equals(nestBox.getFid()))
-                .toList()
-                .stream().findAny();
-        return optNestBox.orElse(null);
+//        List<NestBox> allNestBoxes = nestBoxMongoRepository.findAll();
+//
+//        Optional<NestBox> optNestBox = allNestBoxes
+//                .stream()
+//                .filter(nestBox -> fid.equals(nestBox.getFid()))
+//                .toList()
+//                .stream().findAny();
+//        return optNestBox.orElse(null);
+        return nestBoxMongoRepository.findByPropertiesFid(fid);
     }
 
     @PostMapping("takedown/{fid}/{offline}")
@@ -120,9 +121,7 @@ public class NestBoxController {
 
     @GetMapping("record/{fid}/latest")
     public NestBoxRecord latestNestBoxRecord(@PathVariable("fid") Integer fid){
-        Optional<NestBoxRecord> latestRecord = nestBoxRecordMongoRepository.findAll()
-                .stream()
-                .filter(rec -> fid.equals(rec.getFid()))
+        Optional<NestBoxRecord> latestRecord = nestBoxRecordMongoRepository.findByFid(fid).stream()
                 .max(Comparator.comparing(NestBoxRecord::getRecorddate));
         return latestRecord.orElse(null);
     }
@@ -160,10 +159,7 @@ public class NestBoxController {
     public NestBoxPropertyCheckList getNestBoxesForChecking(@RequestParam(value ="before", required=false) Integer beforeInDays){
 
         //use controller method to get all box properties
-        List<NestBox> pAllActiveBoxes = this.nestBoxMongoRepository
-                .findAll().stream()
-                .filter(nestBox  -> !Boolean.TRUE.equals(nestBox.getIsOffline()))
-                .toList();
+        List<NestBox> pAllActiveBoxes = this.nestBoxMongoRepository.findByPropertiesIsOfflineFalse();
         assertFalse(pAllActiveBoxes.isEmpty());
         for(NestBox b : pAllActiveBoxes){
             List<NestBoxRecord> records = new ArrayList<>();
@@ -179,11 +175,8 @@ public class NestBoxController {
     @GetMapping("checkme2")
     public NestBoxCheckList getNestBoxesForChecking2(@RequestParam(value ="before", required=false) Integer beforeInDays){
 
-        //use controller method to get all box properties
-        List<NestBox> pAllActiveBoxes = this.nestBoxMongoRepository
-                .findAll().stream()
-                .filter(nestBox  -> !Boolean.TRUE.equals(nestBox.getIsOffline()))
-                .toList();
+        //fix: use repository method to get all online boxes
+        List<NestBox> pAllActiveBoxes = this.nestBoxMongoRepository.findByPropertiesIsOfflineFalse();
         assertFalse(pAllActiveBoxes.isEmpty());
         for(NestBox b : pAllActiveBoxes){
             List<NestBoxRecord> records = new ArrayList<>();
@@ -223,14 +216,13 @@ public class NestBoxController {
     @GetMapping("records")
     public List<NestBox> activeNestBoxesWithRecords(){
         //use controller method to get all box properties
-        List<NestBox> pAllActiveBoxes = this.nestBoxMongoRepository
-                .findAll().stream()
-                .filter(nestBox  -> !Boolean.TRUE.equals(nestBox.getIsOffline()))
-                .toList();
-        List<NestBoxRecord> allRecords = this.nestBoxRecordMongoRepository
-                .findAll();
+        List<NestBox> pAllActiveBoxes = this.nestBoxMongoRepository.findByPropertiesIsOfflineFalse();
+//        List<NestBoxRecord> allRecords = this.nestBoxRecordMongoRepository
+//                .findAll();
         for(NestBox b : pAllActiveBoxes){
-            b.setRecords(allRecords.stream().filter(r -> r.getFid() == b.getFid()).toList());
+            List<NestBoxRecord> allRecords = this.nestBoxRecordMongoRepository.findByFid(b.getFid());
+            //b.setRecords(allRecords.stream().filter(r -> r.getFid() == b.getFid()).toList());
+            b.setRecords(allRecords);
         }
         return pAllActiveBoxes;
     }
@@ -278,9 +270,11 @@ public class NestBoxController {
     public ResponseEntity<byte[]> downloadRecords(){
 
         List<NestBox> allNestboxes = nestBoxMongoRepository.findAll();
-        List<NestBoxRecord> records = nestBoxRecordMongoRepository.findAll();
+        //List<NestBoxRecord> records = nestBoxRecordMongoRepository.findAll();
         for(NestBox b : allNestboxes) {
-            b.setRecords(records.stream().filter(r -> r.getFid() == b.getFid()).toList());
+            List<NestBoxRecord> records = nestBoxRecordMongoRepository.findByFid(b.getFid());
+            //b.setRecords(records.stream().filter(r -> r.getFid() == b.getFid()).toList());
+            b.setRecords(records);
         }
 
         ByteArrayOutputStream out = XSLGenerator.generateXSLRecords(allNestboxes);

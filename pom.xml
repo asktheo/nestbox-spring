@@ -11,7 +11,7 @@
 	<packaging>war</packaging>
 	<groupId>dk.theori</groupId>
 	<artifactId>nestbox</artifactId>
-	<version>1.0-SNAPSHOT</version>
+	<version>1.1-SNAPSHOT</version>
 	<name>nestbox</name>
 	<description>Nestbox survey project</description>
 	<properties>
