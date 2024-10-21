@@ -105,6 +105,17 @@
 			<version>5.2.5</version>
 		</dependency>
 	</dependencies>
+	<profiles>
+		<profile>
+			<id>staging</id>
+			<properties>
+				<spring.config.location>classpath:staging.properties</spring.config.location>
+			</properties>
+			<build>
+				<finalName>${project.artifactId}-${project.version}-staging</finalName>
+			</build>
+		</profile>
+	</profiles>
 
 	<build>
 		<plugins>
