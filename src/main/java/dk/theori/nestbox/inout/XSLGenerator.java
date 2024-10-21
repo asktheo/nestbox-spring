@@ -87,19 +87,10 @@ public class XSLGenerator {
         try (Workbook workbook = new XSSFWorkbook()) {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             String sheetTitle = "Udførte Redekassetjek";
-            Sheet wbSheet = workbook.createSheet();
+            Sheet wbSheet = workbook.createSheet(sheetTitle);
             int rowNum = 0;
-            Row titleRow = wbSheet.createRow(rowNum);
-            titleRow.setHeight (Short.parseShort(String.valueOf(20*15)));
-            CellStyle cellStyle = wbSheet.getWorkbook().createCellStyle();
-            Font headerFont = wbSheet.getWorkbook().createFont();
-            headerFont.setBold(true);
-            cellStyle.setFont(headerFont);
-            titleRow.setRowStyle(cellStyle);
-            titleRow.createCell(0).setCellValue(sheetTitle);
-            rowNum++;
             // Create header row
-            Row headerRow = wbSheet.createRow(0);
+            Row headerRow = wbSheet.createRow(rowNum);
             String[] headers = {
                     "Zone",
                     "Kasse nummer",
@@ -118,29 +109,17 @@ public class XSLGenerator {
                 Cell cell = headerRow.createCell(i);
                 cell.setCellValue(headers[i]);
             }
-
+            rowNum++;
             // Populate data rows
             for (NestBox obj : boxes) {
-
                 List<NestBoxRecord> records = obj.getRecords();
-                String name = obj.getBoxId() + (obj.getOrientation() == null? "": obj.getOrientation());
-                //create a box row which is a group header if there are more
-                Row boxRow = wbSheet.createRow(rowNum++);
-                boxRow.createCell(0).setCellValue(obj.getZone());
-                boxRow.createCell(1).setCellValue(name);
-
-                if(records.size() == 1){
-                    fillRecordRow(records.get(0),2,boxRow, dateTimeFormatter, dateFormatter);
+                for(NestBoxRecord r : records){
+                    Row recRow = wbSheet.createRow(rowNum++);
+                    recRow.createCell(0).setCellValue(obj.getZone());
+                    String name = obj.getBoxId() + (obj.getOrientation() == null? "": obj.getOrientation());
+                    recRow.createCell(1).setCellValue(name);
+                    fillRecordRow(r,2,recRow, dateTimeFormatter, dateFormatter);
                 }
-                else
-                {
-                    for(NestBoxRecord r : records){
-                        Row recRow = wbSheet.createRow(rowNum++);
-                        fillRecordRow(r,2,recRow, dateTimeFormatter, dateFormatter);
-                    }
-                }
-
-
             }
             workbook.write(outputStream);
             // Write to OutputStream
