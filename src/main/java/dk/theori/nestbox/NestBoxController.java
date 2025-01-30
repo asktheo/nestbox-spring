@@ -122,7 +122,7 @@ public class NestBoxController {
     @GetMapping("record/{fid}/latest")
     public NestBoxRecord latestNestBoxRecord(@PathVariable("fid") Integer fid){
         Optional<NestBoxRecord> latestRecord = nestBoxRecordMongoRepository.findByFid(fid).stream()
-                .max(Comparator.comparing(NestBoxRecord::getRecorddate));
+                .max(Comparator.comparing(NestBoxRecord::getDatetime));
         return latestRecord.orElse(null);
     }
 
