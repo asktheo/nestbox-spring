@@ -10,12 +10,13 @@ public class NestBoxProperties {
     private String boxId; // real identificator of / number of box,
     private String zone; // the zone in which the box is located
     private String orientation; // direction in Danish,
-    private Boolean isOffline; // is the box removed ?
+  //  private Boolean isOffline; // is the box removed ?
 
-    public void setOffline(boolean offline) {
+  /*  public void setOffline(boolean offline) {
         isOffline = offline;
     }
-    public Boolean getIsOffline(){
-        return !(isOffline == null || !isOffline);
+   public Boolean getIsOffline(){
+      return !(isOffline == null || !isOffline);
     }
+   */
 }

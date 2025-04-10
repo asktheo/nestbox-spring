@@ -49,8 +49,9 @@ public class NestBoxController {
     public List<NestBoxProperties> nestBoxProperties(
             @RequestParam(value ="boxId", required=false) String boxId,
             @RequestParam(value = "altitude", required=false) Integer altitude,
-            @RequestParam(value = "zone", required=false) String zone,
-            @RequestParam(value = "offline", required=false) Boolean offline){
+            @RequestParam(value = "zone", required=false) String zone
+           // @RequestParam(value = "offline", required=false) Boolean offline
+    ){
         //find all and filter later
         List<NestBox> allNestBoxes = nestBoxMongoRepository.findAll();
 
@@ -59,7 +60,7 @@ public class NestBoxController {
                 .filter(nestBox -> boxId == null || boxId.equals(nestBox.getBoxId()))
                 .filter(nestBox -> altitude == null || altitude.equals(nestBox.getAltitude()))
                 .filter(nestBox -> zone == null || zone.equals(nestBox.getZone()))
-                .filter(nestBox -> offline == null || offline.equals(nestBox.getIsOffline()))
+                //.filter(nestBox -> offline == null || offline.equals(nestBox.getIsOffline()))
                 .map(NestBox::getProperties)
                 .toList();
     }
@@ -68,8 +69,9 @@ public class NestBoxController {
     public List<NestBox> nestBoxFeatures(
             @RequestParam(value ="boxId", required=false) String boxId,
             @RequestParam(value = "altitude", required=false) Integer altitude,
-            @RequestParam(value = "zone", required=false) String zone,
-            @RequestParam(value = "offline", required=false) Boolean offline){
+            @RequestParam(value = "zone", required=false) String zone
+            //@RequestParam(value = "offline", required=false) Boolean offline
+            ){
         List<NestBox> allNestBoxes = nestBoxMongoRepository.findAll();
 
         return allNestBoxes
@@ -77,35 +79,16 @@ public class NestBoxController {
                 .filter(nestBox -> boxId == null || boxId.equals(nestBox.getBoxId()))
                 .filter(nestBox -> altitude == null || altitude.equals(nestBox.getAltitude()))
                 .filter(nestBox -> zone == null || zone.equals(nestBox.getZone()))
-                .filter(nestBox -> offline == null || !offline.equals(nestBox.getIsOffline()))
+                //.filter(nestBox -> offline == null || !offline.equals(nestBox.getIsOffline()))
                 .toList();
     }
 
     @GetMapping("feature/{fid}")
 
     public NestBox nestBoxFeatureById(@PathVariable("fid") Integer fid){
-//        List<NestBox> allNestBoxes = nestBoxMongoRepository.findAll();
-//
-//        Optional<NestBox> optNestBox = allNestBoxes
-//                .stream()
-//                .filter(nestBox -> fid.equals(nestBox.getFid()))
-//                .toList()
-//                .stream().findAny();
-//        return optNestBox.orElse(null);
         return nestBoxMongoRepository.findByPropertiesFid(fid);
     }
 
-    @PostMapping("takedown/{fid}/{offline}")
-    public NestBoxProperties setOffLine(@PathVariable("fid") Integer fid, @PathVariable("offline") Boolean offline){
-        NestBox nestBox = nestBoxFeatureById(fid);
-        if(nestBox != null) {
-            NestBoxProperties props = nestBox.getProperties();
-            props.setIsOffline(offline);
-            this.nestBoxMongoRepository.save(nestBox);
-            return nestBox.getProperties();
-        }
-        else return null;
-    }
 
     @GetMapping("record/{fid}/new")
     public NestBoxRecord newNestBoxRecord(@PathVariable("fid") Integer fid){
@@ -159,9 +142,9 @@ public class NestBoxController {
     public NestBoxPropertyCheckList getNestBoxesForChecking(@RequestParam(value ="before", required=false) Integer beforeInDays){
 
         //use controller method to get all box properties
-        List<NestBox> pAllActiveBoxes = this.nestBoxMongoRepository.findByPropertiesIsOfflineFalse();
-        assertFalse(pAllActiveBoxes.isEmpty());
-        for(NestBox b : pAllActiveBoxes){
+        List<NestBox> pAllBoxes = this.nestBoxMongoRepository.findAll();
+        //assertFalse(pAllBoxes.isEmpty());
+        for(NestBox b : pAllBoxes){
             List<NestBoxRecord> records = new ArrayList<>();
             //TODO implement that all records for the box can be added here
             NestBoxRecord record = latestNestBoxRecord(b.getFid());
@@ -169,16 +152,16 @@ public class NestBoxController {
                 records.add(record);
             b.setRecords(records);
         }
-        return CheckCalculator.calcuLatest(pAllActiveBoxes, beforeInDays);
+        return CheckCalculator.calcuLatest(pAllBoxes, beforeInDays);
     }
 
     @GetMapping("checkme2")
     public NestBoxCheckList getNestBoxesForChecking2(@RequestParam(value ="before", required=false) Integer beforeInDays){
 
-        //fix: use repository method to get all online boxes
-        List<NestBox> pAllActiveBoxes = this.nestBoxMongoRepository.findByPropertiesIsOfflineFalse();
-        assertFalse(pAllActiveBoxes.isEmpty());
-        for(NestBox b : pAllActiveBoxes){
+        //fix: use repository method to get all boxes
+        List<NestBox> pAllBoxes = this.nestBoxMongoRepository.findAll();
+        //assertFalse(pAllBoxes.isEmpty());
+        for(NestBox b : pAllBoxes){
             List<NestBoxRecord> records = new ArrayList<>();
             //TODO implement that all records for the box can be added here
             NestBoxRecord record = latestNestBoxRecord(b.getFid());
@@ -187,7 +170,7 @@ public class NestBoxController {
             b.setRecords(records);
         }
 
-        return CheckCalculator.calcuLatest2(pAllActiveBoxes, beforeInDays);
+        return CheckCalculator.calcuLatest2(pAllBoxes, beforeInDays);
     }
 
     private NestBoxStatus fixStatus(NestBoxRecord box) throws NoSuchElementException{
@@ -216,15 +199,16 @@ public class NestBoxController {
     @GetMapping("records")
     public List<NestBox> activeNestBoxesWithRecords(){
         //use controller method to get all box properties
-        List<NestBox> pAllActiveBoxes = this.nestBoxMongoRepository.findByPropertiesIsOfflineFalse();
-//        List<NestBoxRecord> allRecords = this.nestBoxRecordMongoRepository
-//                .findAll();
-        for(NestBox b : pAllActiveBoxes){
+        //List<NestBox> pAllActiveBoxes = this.nestBoxMongoRepository.findByPropertiesIsOfflineFalse();
+        List<NestBox> pAllBoxes = this.nestBoxMongoRepository.findAll();
+        //List<NestBoxRecord> allRecords = this.nestBoxRecordMongoRepository
+        //        .findAll();
+        for(NestBox b : pAllBoxes){
             List<NestBoxRecord> allRecords = this.nestBoxRecordMongoRepository.findByFid(b.getFid());
             //b.setRecords(allRecords.stream().filter(r -> r.getFid() == b.getFid()).toList());
             b.setRecords(allRecords);
         }
-        return pAllActiveBoxes;
+        return pAllBoxes;
     }
 
     @PostMapping("records/translate")

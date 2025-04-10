@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface NestBoxMongoRepository extends MongoRepository<NestBox, Integer> {
 
-    List<NestBox> findByPropertiesIsOfflineFalse();
+    //List<NestBox> findByPropertiesIsOfflineFalse();
 
     NestBox findByPropertiesFid(Integer fid);
 
