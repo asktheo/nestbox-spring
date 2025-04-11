@@ -48,7 +48,7 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(
                         (requests) -> requests
-                                .requestMatchers("/nestbox/**")
+                                .requestMatchers("/nestbox/**","/repair/**")
                                 .authenticated()
                 )
                 .authenticationProvider(authenticationProvider())
