@@ -1,9 +1,6 @@
 package dk.theori.nestbox.inout;
 
-import dk.theori.nestbox.entities.NestBox;
-import dk.theori.nestbox.entities.NestBoxPropertyCheckList;
-import dk.theori.nestbox.entities.NestBoxProperties;
-import dk.theori.nestbox.entities.NestBoxRecord;
+import dk.theori.nestbox.entities.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -15,7 +12,7 @@ import java.util.List;
 @Slf4j
 public class XSLGenerator {
 
-    public static ByteArrayOutputStream generateXSLCheckList(NestBoxPropertyCheckList checkList, Integer beforeInDays) {
+    public static ByteArrayOutputStream generateXSLCheckList(NestBoxCheckList checkList, Integer beforeInDays) {
         try (Workbook workbook = new XSSFWorkbook()) {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             //sheet names and titles
@@ -40,7 +37,7 @@ public class XSLGenerator {
     }
 
 
-    private static void generateSheetContent(Sheet wbSheet, List<NestBoxProperties> boxes, String sheetTitle){
+    private static void generateSheetContent(Sheet wbSheet, List<NestBox> boxes, String sheetTitle){
 
         // Create header row
 
@@ -70,7 +67,7 @@ public class XSLGenerator {
         }
 
         // Populate data rows
-        for (NestBoxProperties obj : boxes) {
+        for (NestBox obj : boxes) {
             rowNum++;
             Row row = wbSheet.createRow(rowNum);
             String name = obj.getBoxId() + (obj.getOrientation() == null ? "" : obj.getOrientation());

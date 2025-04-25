@@ -22,8 +22,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-import static com.mongodb.assertions.Assertions.assertFalse;
-
 @CrossOrigin
 @RestController()
 @Slf4j
@@ -44,6 +42,9 @@ public class NestBoxController {
 
     @Autowired
     private SpeciesMongoRepository speciesMongoRepository;
+
+    @Autowired
+    private RepairController repairController;
 
     @GetMapping("")
     public List<NestBoxProperties> nestBoxProperties(
@@ -91,7 +92,7 @@ public class NestBoxController {
 
 
     @GetMapping("record/{fid}/new")
-    public NestBoxRecord newNestBoxRecord(@PathVariable("fid") Integer fid){
+    public ResponseEntity newNestBoxRecord(@PathVariable("fid") Integer fid){
         NestBoxRecord record = new NestBoxRecord();
         record.setFid(fid);
         record.setRecorddate(LocalDate.now());
@@ -99,7 +100,18 @@ public class NestBoxController {
         record.setNesting(new NestingDetails());
         //rings is an interval (from ring #, to ring #)
         record.setRings(new String[]{null, null});
-        return record;
+        HashMap<String,Object> responseMap = new HashMap<>();
+        //I don't want a new entity with mix a of objects, so I just make a HashMap
+        responseMap.put("record",record);
+        ResponseEntity<Repair> resp = repairController.getRepairByFid(fid);
+        boolean hasRepair = false;
+        if(resp.getStatusCode().value() < 400) {
+            responseMap.put("repairType", resp.getBody().getRepairType());
+            hasRepair = true;
+        }
+        responseMap.put("hasRepair", hasRepair);
+
+        return ResponseEntity.ok(responseMap);
     }
 
     @GetMapping("record/{fid}/latest")
@@ -139,7 +151,7 @@ public class NestBoxController {
     }
 
     @GetMapping("checkme")
-    public NestBoxPropertyCheckList getNestBoxesForChecking(@RequestParam(value ="before", required=false) Integer beforeInDays){
+    public NestBoxCheckList getNestBoxesForChecking(@RequestParam(value ="before", required=false) Integer beforeInDays){
 
         //use controller method to get all box properties
         List<NestBox> pAllBoxes = this.nestBoxMongoRepository.findAll();
@@ -151,8 +163,12 @@ public class NestBoxController {
             if (record != null)
                 records.add(record);
             b.setRecords(records);
+            ResponseEntity<Repair> resp = repairController.getRepairByFid(b.getFid());
+            b.setRepairLevel(resp.getStatusCode().value() > 400
+                    ? 0
+                    : (resp.getBody()).getRepairType().getRepairTypeId());
         }
-        return CheckCalculator.calcuLatest(pAllBoxes, beforeInDays);
+        return CheckCalculator.calcuLatest2(pAllBoxes, beforeInDays);
     }
 
     @GetMapping("checkme2")
@@ -282,7 +298,7 @@ public class NestBoxController {
     @GetMapping("download/checkme")
     public ResponseEntity<byte[]>  downloadBoxesForChecking(@RequestParam(value ="before", required=false) Integer beforeInDays){
 
-        NestBoxPropertyCheckList nestBoxesForChecking = getNestBoxesForChecking(beforeInDays);
+        NestBoxCheckList nestBoxesForChecking = getNestBoxesForChecking(beforeInDays);
 
         ByteArrayOutputStream out = XSLGenerator.generateXSLCheckList(nestBoxesForChecking, beforeInDays);
 

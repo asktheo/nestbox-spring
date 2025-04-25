@@ -22,6 +22,8 @@ public class NestBox {
 
     private List<NestBoxRecord> records;
 
+    private Integer repairLevel = 0;
+
     /*
     - unique identifier fid is nested
      */

@@ -7,8 +7,6 @@ import dk.theori.nestbox.entities.RepairType;
 import dk.theori.nestbox.repositories.NestBoxMongoRepository;
 import dk.theori.nestbox.repositories.RepairRepository;
 import dk.theori.nestbox.repositories.RepairTypeRepository;
-import org.apache.coyote.Response;
-import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.ResponseEntity;
@@ -16,7 +14,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @CrossOrigin
@@ -62,7 +59,12 @@ public class RepairController {
         List<Repair> repair = this.repairRepository.findByFid(fid).stream()
                 .filter(it-> !it.getIsRepaired()).toList();
         if(repair.isEmpty()) return ResponseEntity.notFound().build();
-        else return ResponseEntity.ok(repair.get(0));
+        else {
+            Repair rep = repair.get(0);
+            RepairType repairType = rep.getRepairType();
+            repairType.setRepairTypeName(repairTypeRepository.findByRepairTypeId(repairType.getRepairTypeId()).getRepairTypeName());
+            return ResponseEntity.ok(repair.get(0));
+        }
     }
 
 
